@@ -42,6 +42,8 @@ define(function (require, exports, module) {
         CFMLAttributes      = require("text!CfmlAttributes.json"),
         HTMLTags            = require("text!HtmlTags.json"),
         HTMLAttributes      = require("text!HtmlAttributes.json"),
+        dontCloseTags       = require("text!CfmlDontCloseTags.json"),
+        dontCloseTagsLst,
         tags,tagsHTML,
         attributes,attributesHTML;
 
@@ -66,7 +68,7 @@ define(function (require, exports, module) {
         }
 				// cfbrackets.org --> Hack to disable auto closing of some coldfusion tags
 				// if you know a better/proper way to do this please get in contact
-				this.editor._codeMirror.options.autoCloseTags.dontCloseTags = ["area", "base", "br", "col", "command", "embed", "hr", "img", "input", "keygen", "link", "meta", "param", "source", "track", "wbr","cfabort","cfapplet","cfapplication","cfargument","cfassociate","cfbreak","cfcache","cfcalendar","cfchartdata","cfchartseries","cfcol","cfcollection","cfcontent","cfcookie","cfdbinfo","cfdirectory","cfdiv","cfdump","cfelse","cfelseif","cferror","cfexit","cffile","cfflush","cfftp","cfgridcolumn","cfgridrow","cfgridupdate","cfheader","cfhtmlhead","cfhttp","cfhttpparam","cfcontinue","cfimap","cfimport","cfinclude","cfindex","cfinput","cfinsert","cfinvoke","cfinvokeargument","cfldap","cflocation","cflog","cfloginuser","cflogout","cfmailparam","cfmodule","cfntauthenticate","cfobject","cfobjectcache","cfparam","cfpop","cfprocparam","cfprocresult","cfproperty","cfqueryparam","cfregistry","cfreport","cfreportparam","cfrethrow","cfreturn","cfschedule","cfsearch","cfset","cfsetting","cfslider","cfstoredproc","cftextinput","cfthrow","cftrace","cftreeitem","cfupdate","cfwddx","cfajaximport","cfprint","cfsprydataset","cfajaxproxy","cfexchangecalendar","cfexchangeconnection","cfexchangecontact","cfexchangefilter","cfexchangemail","cfexchangetask","cfexchangefolder","cfexchangeconversation","cffeed","cfimage","cfpdf","cfpdfformparam","cfpdfparam","cfpresenter","cfzip","cfzipparam","cfprogressbar","cfspreadsheet","cfmediaplayer","cffileupload","cfsharepoint","cfmapitem","cfmessagebox","cfwebsocket"];
+				this.editor._codeMirror.options.autoCloseTags.dontCloseTags = dontCloseTagsLst;
     };
     
     /**
@@ -729,12 +731,12 @@ define(function (require, exports, module) {
     };
 
     AppInit.appReady(function () {
-				console.log('cfml extension starting up');
         // Parse JSON files
         tags = JSON.parse(CFMLTags);
         attributes = JSON.parse(CFMLAttributes);
         tagsHTML = JSON.parse(HTMLTags);
         attributesHTML = JSON.parse(HTMLAttributes);
+				dontCloseTagsLst = JSON.parse(dontCloseTags);
 				// cfbrackets.org --> load the html and cfml definitions seperate to have it 
 				// simpler to update just one of them
         $.extend(true, tags, tagsHTML);
@@ -744,7 +746,6 @@ define(function (require, exports, module) {
         var attrHints = new AttrHints();
         CodeHintManager.registerHintProvider(tagHints, ["html"], 5);
         CodeHintManager.registerHintProvider(attrHints, ["html"], 5);
-    
 		
         // For unit testing
         exports.tagHintProvider = tagHints;
