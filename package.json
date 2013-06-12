@@ -1,0 +1,12 @@
+{
+	"name": "aeberli.cfml",
+	"title": "CFML Support",
+	"description": "CFML Support for Brackets.",
+	"homepage": "http://cfbrackets.org",
+	"version": "0.1.0",
+	"author": "Reto Aeberli, contact@cfbrackets.org",
+	"license": "MIT",
+	"engines": {
+		"brackets": ">=0.25.0"
+	}
+}
