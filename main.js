@@ -34,7 +34,7 @@ define(function (require, exports, module) {
         DocumentManager     = brackets.getModule("document/DocumentManager"),
         EditorManager       = brackets.getModule("editor/EditorManager"),
         HTMLUtils           = brackets.getModule("language/HTMLUtils"),
-        NativeFileSystem    = brackets.getModule("file/NativeFileSystem").NativeFileSystem,
+        FileSystem          = brackets.getModule("filesystem/FileSystem"),
         ProjectManager      = brackets.getModule("project/ProjectManager"),
         StringUtils         = brackets.getModule("utils/StringUtils");
     
@@ -44,8 +44,10 @@ define(function (require, exports, module) {
         HTMLAttributes      = require("text!HtmlAttributes.json"),
         dontCloseTags       = require("text!CfmlDontCloseTags.json"),
         dontCloseTagsLst,
-        tags,tagsHTML,
-        attributes,attributesHTML;
+        tags,
+        tagsHTML,
+        attributes,
+        attributesHTML;
 
     /**
      * @constructor
@@ -305,10 +307,8 @@ define(function (require, exports, module) {
             self.cachedHints = {};
             self.cachedHints.deferred = $.Deferred();
             self.cachedHints.unfiltered = [];
-
-            NativeFileSystem.requestNativeFileSystem(targetDir, function (fs) {
-                fs.root.createReader().readEntries(function (entries) {
-
+            FileSystem.resolve(targetDir, function (err, item) {
+                item.getContents(function (err, entries) {
                     entries.forEach(function (entry) {
                         if (ProjectManager.shouldShow(entry)) {
                             // convert to doc relative path
