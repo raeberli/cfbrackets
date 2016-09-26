@@ -1,24 +1,24 @@
 /*
  * Copyright (c) 2012 Adobe Systems Incorporated. All rights reserved.
- *  
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"), 
- * to deal in the Software without restriction, including without limitation 
- * the rights to use, copy, modify, merge, publish, distribute, sublicense, 
- * and/or sell copies of the Software, and to permit persons to whom the 
+ * copy of this software and associated documentation files (the "Software"),
+ * to deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the
  * Software is furnished to do so, subject to the following conditions:
- *  
+ *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
- *  
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, 
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER 
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING 
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
- * 
+ *
  */
 
 
@@ -31,13 +31,15 @@ define(function (require, exports, module) {
     // Load dependent modules
     var AppInit             = brackets.getModule("utils/AppInit"),
         CodeHintManager     = brackets.getModule("editor/CodeHintManager"),
+        CodeMirror 			= brackets.getModule("thirdparty/CodeMirror2/lib/codemirror"),
         DocumentManager     = brackets.getModule("document/DocumentManager"),
         EditorManager       = brackets.getModule("editor/EditorManager"),
         HTMLUtils           = brackets.getModule("language/HTMLUtils"),
         FileSystem          = brackets.getModule("filesystem/FileSystem"),
+        LanguageManager 	= brackets.getModule("language/LanguageManager"),
         ProjectManager      = brackets.getModule("project/ProjectManager"),
         StringUtils         = brackets.getModule("utils/StringUtils");
-    
+
     var CFMLTags            = require("text!CfmlTags.json"),
         CFMLAttributes      = require("text!CfmlAttributes.json"),
         HTMLTags            = require("text!HtmlTags.json"),
@@ -55,9 +57,9 @@ define(function (require, exports, module) {
     function TagHints() {
         this.exclusion = null;
     }
-    
+
     /**
-     * Check whether the exclusion is still the same as text after the cursor. 
+     * Check whether the exclusion is still the same as text after the cursor.
      * If not, reset it to null.
      */
     TagHints.prototype.updateExclusion = function () {
@@ -68,31 +70,31 @@ define(function (require, exports, module) {
                 this.exclusion = null;
             }
         }
-				// cfbrackets.org --> Hack to disable auto closing of some coldfusion tags
-				// if you know a better/proper way to do this please get in contact
-				this.editor._codeMirror.options.autoCloseTags.dontCloseTags = dontCloseTagsLst;
+                // cfbrackets.org --> Hack to disable auto closing of some coldfusion tags
+                // if you know a better/proper way to do this please get in contact
+                this.editor._codeMirror.options.autoCloseTags.dontCloseTags = dontCloseTagsLst;
     };
-    
+
     /**
      * Determines whether HTML tag hints are available in the current editor
      * context.
-     * 
-     * @param {Editor} editor 
+     *
+     * @param {Editor} editor
      * A non-null editor object for the active window.
      *
-     * @param {string} implicitChar 
+     * @param {string} implicitChar
      * Either null, if the hinting request was explicit, or a single character
      * that represents the last insertion and that indicates an implicit
      * hinting request.
      *
-     * @return {boolean} 
+     * @return {boolean}
      * Determines whether the current provider is able to provide hints for
      * the given editor context and, in case implicitChar is non- null,
      * whether it is appropriate to do so.
      */
     TagHints.prototype.hasHints = function (editor, implicitChar) {
         var pos = editor.getCursorPos();
-        
+
         this.tagInfo = HTMLUtils.getTagInfo(editor, pos);
         this.editor = editor;
         if (implicitChar === null) {
@@ -115,15 +117,15 @@ define(function (require, exports, module) {
             return false;
         }
     };
-       
+
     /**
      * Returns a list of availble HTML tag hints if possible for the current
-     * editor context. 
+     * editor context.
      *
-     * @return {{hints: Array<string|jQueryObject>, match: string, 
+     * @return {{hints: Array<string|jQueryObject>, match: string,
      *      selectInitial: boolean}}
      * Null if the provider wishes to end the hinting session. Otherwise, a
-     * response object that provides 1. a sorted array hints that consists 
+     * response object that provides 1. a sorted array hints that consists
      * of strings; 2. a string match that is used by the manager to emphasize
      * matching substrings when rendering the hint list; and 3. a boolean that
      * indicates whether the first result, if one exists, should be selected
@@ -142,7 +144,7 @@ define(function (require, exports, module) {
                         return key;
                     }
                 }).sort();
-                
+
                 return {
                     hints: result,
                     match: query,
@@ -150,17 +152,17 @@ define(function (require, exports, module) {
                 };
             }
         }
-        
+
         return null;
     };
-    
+
     /**
-     * Inserts a given HTML tag hint into the current editor context. 
-     * 
-     * @param {string} hint 
+     * Inserts a given HTML tag hint into the current editor context.
+     *
+     * @param {string} hint
      * The hint to be inserted into the editor context.
      *
-     * @return {boolean} 
+     * @return {boolean}
      * Indicates whether the manager should follow hint insertion with an
      * additional explicit hint request.
      */
@@ -191,7 +193,7 @@ define(function (require, exports, module) {
             }
             this.exclusion = null;
         }
-        
+
         return false;
     };
 
@@ -202,7 +204,7 @@ define(function (require, exports, module) {
         this.globalAttributes = this.readGlobalAttrHints();
         this.cachedHints = null;
         this.exclusion = "";
-        
+
         // Used in URL hinting to keep the popup list open
         // by setting this to false.
         this.closeOnSelect = true;
@@ -229,7 +231,7 @@ define(function (require, exports, module) {
     AttrHints.prototype._getUrlList = function (query) {
         var doc,
             result = [];
-        
+
         // site-root relative links are not yet supported, so filter them out
         if (query.queryStr.length > 0 && query.queryStr[0] === "/") {
             return result;
@@ -324,7 +326,7 @@ define(function (require, exports, module) {
                     self.cachedHints.query      = query;
                     self.cachedHints.queryDir   = queryDir;
                     self.cachedHints.docDir     = docDir;
-                    
+
                     if (self.cachedHints.deferred.state() !== "rejected") {
                         var currentDeferred = self.cachedHints.deferred;
                         // Since we've cached the results, the next call to _getUrlList should be synchronous.
@@ -337,7 +339,7 @@ define(function (require, exports, module) {
                             if (currentDeferred && currentDeferred.state() === "pending") {
                                 currentDeferred.reject();
                             }
-                            
+
                             if (self.cachedHints.deferred && self.cachedHints.deferred.state() === "pending") {
                                 self.cachedHints.deferred.reject();
                                 self.cachedHints.deferred = null;
@@ -375,31 +377,31 @@ define(function (require, exports, module) {
 
     /**
      * Helper function that determines the possible value hints for a given html tag/attribute name pair
-     * 
+     *
      * @param {{queryStr: string}} query
      * The current query
      *
-     * @param {string} tagName 
+     * @param {string} tagName
      * HTML tag name
      *
-     * @param {string} attrName 
+     * @param {string} attrName
      * HTML attribute name
      *
-     * @return {{hints: Array.<string>|$.Deferred, sortFunc: ?Function}} 
+     * @return {{hints: Array.<string>|$.Deferred, sortFunc: ?Function}}
      * The (possibly deferred) hints and the sort function to use on thise hints.
      */
     AttrHints.prototype._getValueHintsForAttr = function (query, tagName, attrName) {
-        // We look up attribute values with tagName plus a slash and attrName first.  
-        // If the lookup fails, then we fall back to look up with attrName only. Most 
-        // of the attributes in JSON are using attribute name only as their properties, 
-        // but in some cases like "type" attribute, we have different properties like 
+        // We look up attribute values with tagName plus a slash and attrName first.
+        // If the lookup fails, then we fall back to look up with attrName only. Most
+        // of the attributes in JSON are using attribute name only as their properties,
+        // but in some cases like "type" attribute, we have different properties like
         // "script/type", "link/type" and "button/type".
         var hints = [],
             sortFunc = null;
-        
+
         var tagPlusAttr = tagName + "/" + attrName,
             attrInfo = attributes[tagPlusAttr] || attributes[attrName];
-        
+
         if (attrInfo) {
             if (attrInfo.type === "boolean") {
                 hints = ["false", "true"];
@@ -412,12 +414,12 @@ define(function (require, exports, module) {
                 hints = attrInfo.attribOption;
             }
         }
-        
+
         return { hints: hints, sortFunc: sortFunc };
     };
-    
+
     /**
-     * Check whether the exclusion is still the same as text after the cursor. 
+     * Check whether the exclusion is still the same as text after the cursor.
      * If not, reset it to null.
      *
      * @param {boolean} attrNameOnly
@@ -429,7 +431,7 @@ define(function (require, exports, module) {
             var tokenType = this.tagInfo.position.tokenType,
                 offset = this.tagInfo.position.offset,
                 textAfterCursor;
-            
+
             if (tokenType === HTMLUtils.ATTR_NAME) {
                 textAfterCursor = this.tagInfo.attr.name.substr(offset);
             } else if (!attrNameOnly && tokenType === HTMLUtils.ATTR_VALUE) {
@@ -440,20 +442,20 @@ define(function (require, exports, module) {
             }
         }
     };
-    
+
     /**
-     * Determines whether HTML attribute hints are available in the current 
+     * Determines whether HTML attribute hints are available in the current
      * editor context.
-     * 
-     * @param {Editor} editor 
+     *
+     * @param {Editor} editor
      * A non-null editor object for the active window.
      *
-     * @param {string} implicitChar 
+     * @param {string} implicitChar
      * Either null, if the hinting request was explicit, or a single character
      * that represents the last insertion and that indicates an implicit
      * hinting request.
      *
-     * @return {boolean} 
+     * @return {boolean}
      * Determines whether the current provider is able to provide hints for
      * the given editor context and, in case implicitChar is non-null,
      * whether it is appropriate to do so.
@@ -470,7 +472,7 @@ define(function (require, exports, module) {
         offset = this.tagInfo.position.offset;
         if (implicitChar === null) {
             query = null;
-             
+
             if (tokenType === HTMLUtils.ATTR_NAME) {
                 if (offset >= 0) {
                     query = this.tagInfo.attr.name.slice(0, offset);
@@ -479,12 +481,12 @@ define(function (require, exports, module) {
                 if (this.tagInfo.position.offset >= 0) {
                     query = this.tagInfo.attr.value.slice(0, offset);
                 } else {
-                    // We get negative offset for a quoted attribute value with some leading whitespaces 
+                    // We get negative offset for a quoted attribute value with some leading whitespaces
                     // as in <a rel= "rtl" where the cursor is just to the right of the "=".
-                    // So just set the queryStr to an empty string. 
+                    // So just set the queryStr to an empty string.
                     query = "";
                 }
-                
+
                 // If we're at an attribute value, check if it's an attribute name that has hintable values.
                 if (this.tagInfo.attr.name) {
                     var hintsAndSortFunc = this._getValueHintsForAttr({queryStr: query},
@@ -514,7 +516,7 @@ define(function (require, exports, module) {
                     this.updateExclusion(false);
                 }
             }
-            
+
             return query !== null;
         } else {
             if (implicitChar === " " || implicitChar === "'" ||
@@ -527,15 +529,15 @@ define(function (require, exports, module) {
             return false;
         }
     };
-    
+
     /**
-     * Returns a list of availble HTML attribute hints if possible for the 
-     * current editor context. 
+     * Returns a list of availble HTML attribute hints if possible for the
+     * current editor context.
      *
-     * @return {{hints: Array<string|jQueryObject>, match: string, 
+     * @return {{hints: Array<string|jQueryObject>, match: string,
      *      selectInitial: boolean}}
      * Null if the provider wishes to end the hinting session. Otherwise, a
-     * response object that provides 1. a sorted array hints that consists 
+     * response object that provides 1. a sorted array hints that consists
      * of strings; 2. a string match that is used by the manager to emphasize
      * matching substrings when rendering the hint list; and 3. a boolean that
      * indicates whether the first result, if one exists, should be selected
@@ -553,7 +555,7 @@ define(function (require, exports, module) {
         offset = this.tagInfo.position.offset;
         if (tokenType === HTMLUtils.ATTR_NAME || tokenType === HTMLUtils.ATTR_VALUE) {
             query.tag = this.tagInfo.tagName;
-            
+
             if (offset >= 0) {
                 if (tokenType === HTMLUtils.ATTR_NAME) {
                     query.queryStr = this.tagInfo.attr.name.slice(0, offset);
@@ -563,9 +565,9 @@ define(function (require, exports, module) {
                 }
                 this.updateExclusion(false);
             } else if (tokenType === HTMLUtils.ATTR_VALUE) {
-                // We get negative offset for a quoted attribute value with some leading whitespaces 
+                // We get negative offset for a quoted attribute value with some leading whitespaces
                 // as in <a rel= "rtl" where the cursor is just to the right of the "=".
-                // So just set the queryStr to an empty string. 
+                // So just set the queryStr to an empty string.
                 query.queryStr = "";
                 query.attrName = this.tagInfo.attr.name;
             }
@@ -582,12 +584,12 @@ define(function (require, exports, module) {
                 sortFunc = null;
 
             this.closeOnSelect = true;
-            
+
             if (attrName) {
                 var hintsAndSortFunc = this._getValueHintsForAttr(query, tagName, attrName);
                 hints = hintsAndSortFunc.hints;
                 sortFunc = hintsAndSortFunc.sortFunc;
-                
+
             } else if (tags && tags[tagName] && tags[tagName].attributes) {
                 // no global attributes for cfml tags
                 if(tagName.substr(0,2) === 'cf')
@@ -598,7 +600,7 @@ define(function (require, exports, module) {
                     return $.inArray(attr, query.usedAttr) < 0;
                 });
             }
-            
+
             if (hints instanceof Array && hints.length) {
                 console.assert(!result.length);
                 result = $.map(hints, function (item) {
@@ -622,16 +624,16 @@ define(function (require, exports, module) {
             }
         }
 
-        
+
     };
-    
+
     /**
      * Inserts a given HTML attribute hint into the current editor context.
-     * 
-     * @param {string} hint 
+     *
+     * @param {string} hint
      * The hint to be inserted into the editor context.
-     * 
-     * @return {boolean} 
+     *
+     * @return {boolean}
      * Indicates whether the manager should follow hint insertion with an
      * additional explicit hint request.
      */
@@ -670,19 +672,19 @@ define(function (require, exports, module) {
             if (CodeHintManager.hasValidExclusion(this.exclusion, textAfterCursor)) {
                 charCount = offset;
                 // Set exclusion to null only after attribute value insertion,
-                // not after attribute name insertion since we need to keep it 
+                // not after attribute name insertion since we need to keep it
                 // for attribute value insertion.
                 this.exclusion = null;
             } else {
                 charCount = this.tagInfo.attr.value.length;
             }
-            
+
             // Special handling for URL hinting -- if the completion is a file name
             // and not a folder, then close the code hint list.
             if (!this.closeOnSelect && completion.match(/\/$/) === null) {
                 this.closeOnSelect = true;
             }
-            
+
             if (!this.tagInfo.attr.hasEndQuote) {
                 endQuote = this.tagInfo.attr.quoteChar;
                 if (endQuote) {
@@ -715,7 +717,7 @@ define(function (require, exports, module) {
             }
             return true;
         }
-        
+
         if (insertedName) {
             this.editor.setCursorPos(start.line, start.ch + completion.length - 1);
 
@@ -726,19 +728,111 @@ define(function (require, exports, module) {
             // Move the cursor to the right of the existing end quote after value insertion.
             this.editor.setCursorPos(start.line, start.ch + completion.length + 1);
         }
-        
+
         return false;
     };
 
     AppInit.appReady(function () {
+
+        CodeMirror.defineMIME("text/x-cfscript", {
+            name: "haxe"
+        });
+
+        CodeMirror.defineMode("cfmlsql", function(config) {
+          return CodeMirror.multiplexingMode(
+            CodeMirror.getMode(config, "text/x-sql"),
+            {
+                open: "<!---",
+                close:"--->",
+                mode: CodeMirror.getMode(config, "text/plain"),
+                delimStyle: "comment",
+                innerStyle: "comment"
+            },
+            {
+                open: /<cf[^>]+/,
+                close: ">",
+                mode: CodeMirror.getMode(config, "text/html"),
+                parseDelimiters: true
+            },
+            {
+                open: /<\/cf[^>]+>/,
+                close: ">",
+                mode: CodeMirror.getMode(config, "text/plain"),
+                parseDelimiters: true,
+                delimStyle: "tag",
+                innerStyle: "tag"
+            }
+          );
+        });
+
+        CodeMirror.defineMIME("text/x-cfml-sql", "cfmlsql");
+
+
+        CodeMirror.defineMode("cfml", function(config) {
+          return CodeMirror.multiplexingMode(
+            CodeMirror.getMode(config, "text/html"),
+            {
+                open: "<!---",
+                close:"--->",
+                mode: CodeMirror.getMode(config, "text/plain"),
+                delimStyle: "comment",
+                innerStyle: "comment"
+            },
+            {
+                open: "<cfscript>",
+                close:"</cfscript>",
+                mode: CodeMirror.getMode(config, "text/javascript"),
+                delimStyle: "tag"
+            },
+            {
+                open: /component[^{]+{/,
+                close:"tnenopmoc",
+                mode: CodeMirror.getMode(config, "text/x-cfscript"),
+                parseDelimiters: true
+            },
+            {
+                open: /<cfquery [^>]+>/,
+                close: "</cfquery>",
+                mode: CodeMirror.getMode(config, "text/x-cfml-sql"),
+                parseDelimiters: true
+            },
+            {
+                open: /<cf[^>]+>/,
+                close: ">",
+                mode: CodeMirror.getMode(config, "text/html"),
+                parseDelimiters: true
+            },
+            {
+                open: /<\/cf[^>]+>/,
+                close: ">",
+                mode: CodeMirror.getMode(config, "text/plain"),
+                parseDelimiters: true,
+                innerStyle: "tag",
+                delimStyle: "tag"
+            }
+          )
+        });
+
+
+        var html = LanguageManager.getLanguage("html");
+        html.removeFileExtension("cfm");
+        html.removeFileExtension("cfc");
+
+        LanguageManager.defineLanguage("cfml", {
+          name: "CFML",
+          mode: "cfml",
+          fileExtensions: ["cfm", "cfc"],
+        });
+
+
         // Parse JSON files
         tags = JSON.parse(CFMLTags);
         attributes = JSON.parse(CFMLAttributes);
         tagsHTML = JSON.parse(HTMLTags);
         attributesHTML = JSON.parse(HTMLAttributes);
-				dontCloseTagsLst = JSON.parse(dontCloseTags);
-				// cfbrackets.org --> load the html and cfml definitions seperate to have it 
-				// simpler to update just one of them
+        dontCloseTagsLst = JSON.parse(dontCloseTags);
+        // cfbrackets.org --> load the html and cfml definitions seperate to have it
+        // simpler to update just one of them
         $.extend(true, tags, tagsHTML);
         $.extend(true, attributes, attributesHTML);
         // Register code hint providers
@@ -746,7 +840,7 @@ define(function (require, exports, module) {
         var attrHints = new AttrHints();
         CodeHintManager.registerHintProvider(tagHints, ["html"], 5);
         CodeHintManager.registerHintProvider(attrHints, ["html"], 5);
-		
+
         // For unit testing
         exports.tagHintProvider = tagHints;
         exports.attrHintProvider = attrHints;
