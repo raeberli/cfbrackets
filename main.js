@@ -31,13 +31,15 @@ define(function (require, exports, module) {
     // Load dependent modules
     var AppInit             = brackets.getModule("utils/AppInit"),
         CodeHintManager     = brackets.getModule("editor/CodeHintManager"),
+        CodeMirror 			= brackets.getModule("thirdparty/CodeMirror2/lib/codemirror"),
         DocumentManager     = brackets.getModule("document/DocumentManager"),
         EditorManager       = brackets.getModule("editor/EditorManager"),
         HTMLUtils           = brackets.getModule("language/HTMLUtils"),
         FileSystem          = brackets.getModule("filesystem/FileSystem"),
+        LanguageManager 	= brackets.getModule("language/LanguageManager"),
         ProjectManager      = brackets.getModule("project/ProjectManager"),
         StringUtils         = brackets.getModule("utils/StringUtils");
-    
+
     var CFMLTags            = require("text!CfmlTags.json"),
         CFMLAttributes      = require("text!CfmlAttributes.json"),
         HTMLTags            = require("text!HtmlTags.json"),
@@ -731,6 +733,98 @@ define(function (require, exports, module) {
     };
 
     AppInit.appReady(function () {
+
+        CodeMirror.defineMIME("text/x-cfscript", {
+            name: "haxe"
+        });
+
+        CodeMirror.defineMode("cfmlsql", function(config) {
+          return CodeMirror.multiplexingMode(
+            CodeMirror.getMode(config, "text/x-sql"),
+            {
+                open: "<!---",
+                close:"--->",
+                mode: CodeMirror.getMode(config, "text/plain"),
+                delimStyle: "comment",
+                innerStyle: "comment"
+            },
+            {
+                open: /<cf[^>]+/,
+                close: ">",
+                mode: CodeMirror.getMode(config, "text/html"),
+                parseDelimiters: true
+            },
+            {
+                open: /<\/cf[^>]+>/,
+                close: ">",
+                mode: CodeMirror.getMode(config, "text/plain"),
+                parseDelimiters: true,
+                delimStyle: "tag",
+                innerStyle: "tag"
+            }
+          );
+        });
+
+        CodeMirror.defineMIME("text/x-cfml-sql", "cfmlsql");
+
+
+        CodeMirror.defineMode("cfml", function(config) {
+          return CodeMirror.multiplexingMode(
+            CodeMirror.getMode(config, "text/html"),
+            {
+                open: "<!---",
+                close:"--->",
+                mode: CodeMirror.getMode(config, "text/plain"),
+                delimStyle: "comment",
+                innerStyle: "comment"
+            },
+            {
+                open: "<cfscript>",
+                close:"</cfscript>",
+                mode: CodeMirror.getMode(config, "text/javascript"),
+                delimStyle: "tag"
+            },
+            {
+                open: /component[^{]+{/,
+                close:"tnenopmoc",
+                mode: CodeMirror.getMode(config, "text/x-cfscript"),
+                parseDelimiters: true
+            },
+            {
+                open: /<cfquery [^>]+>/,
+                close: "</cfquery>",
+                mode: CodeMirror.getMode(config, "text/x-cfml-sql"),
+                parseDelimiters: true
+            },
+            {
+                open: /<cf[^>]+>/,
+                close: ">",
+                mode: CodeMirror.getMode(config, "text/html"),
+                parseDelimiters: true
+            },
+            {
+                open: /<\/cf[^>]+>/,
+                close: ">",
+                mode: CodeMirror.getMode(config, "text/plain"),
+                parseDelimiters: true,
+                innerStyle: "tag",
+                delimStyle: "tag"
+            }
+          )
+        });
+
+
+        var html = LanguageManager.getLanguage("html");
+        html.removeFileExtension("cfm");
+        html.removeFileExtension("cfc");
+
+        LanguageManager.defineLanguage("cfml", {
+          name: "CFML",
+          mode: "cfml",
+          fileExtensions: ["cfm", "cfc"],
+        });
+
+
         // Parse JSON files
         tags = JSON.parse(CFMLTags);
         attributes = JSON.parse(CFMLAttributes);
